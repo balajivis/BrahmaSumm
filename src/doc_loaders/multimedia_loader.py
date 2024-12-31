@@ -7,8 +7,10 @@ import tempfile
 from tqdm import tqdm
 import logging
 from src.chunking.audiochunking import split_audio
-import fast_whisper
+import faster_whisper
 from pytubefix import YouTube
+import shutil
+from subprocess import check_output, STDOUT, CalledProcessError
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -24,9 +26,10 @@ class MultimediaLoader:
         source : str
             The path to a PDF file or a URL to a webpage.
         """
+        self._check_ffmpeg()
         self.source = source
         self.text = ""
-        self.model = whisper.load_model("tiny")
+        self.model = faster_whisper.WhisperModel("tiny")
         
     def __call__(self) -> str:
         """
@@ -87,21 +90,23 @@ class MultimediaLoader:
         
     def _load_audio(self,audio) -> None:
         """
-        Trascribe audio content from the source.
+        Transcribe audio content from the source.
         """
         logger.info("Splitting audio into chunks...")
         audio_chunks = split_audio(audio)
         print(f"Number of audio chunks: {len(audio_chunks)}")
+
         # Give a progress bar
         for i, chunk in tqdm(enumerate(audio_chunks), desc="Transcribing audio chunks", total=len(audio_chunks)):
             wav_file = self.audio_chunk_to_wav(chunk, i)
             
-            result = self.model.transcribe(wav_file)
-            #self.text += result["start"] + "-" + result["end"] + ":" + result["text"] + "\n"
-            self.text += result["text"]
+            # Update transcription call for faster-whisper
+            segments, info = self.model.transcribe(wav_file)
+            for segment in segments:
+                self.text += segment.text + " "
         
-            print(f"Chunk {i+1}: {result['text']}")
-        os.remove(wav_file)
+            print(f"Chunk {i+1} transcribed")
+            os.remove(wav_file)
     
     def audio_chunk_to_wav(self,chunk, chunk_index):
         """
@@ -119,6 +124,39 @@ class MultimediaLoader:
         chunk.export(wav_file_path, format="wav")
         
         return wav_file_path
+
+    def _check_ffmpeg(self):
+        """
+        Check if ffmpeg and ffprobe are installed and accessible.
+        Raises RuntimeError if either is not found.
+        """
+        # Check for ffmpeg
+        if not shutil.which('ffmpeg'):
+            raise RuntimeError(
+                "ffmpeg not found. Please install ffmpeg:\n"
+                "- Mac: brew install ffmpeg\n"
+                "- Linux: sudo apt-get install ffmpeg\n"
+                "- Windows: download from https://ffmpeg.org/download.html"
+            )
+
+        # Check for ffprobe
+        if not shutil.which('ffprobe'):
+            raise RuntimeError(
+                "ffprobe not found. It should be installed with ffmpeg.\n"
+                "If not, please install the complete ffmpeg suite:\n"
+                "- Mac: brew install ffmpeg\n"
+                "- Linux: sudo apt-get install ffmpeg\n"
+                "- Windows: download from https://ffmpeg.org/download.html"
+            )
+
+        try:
+            # Check ffmpeg
+            check_output(['ffmpeg', '-version'], stderr=STDOUT)
+            # Check ffprobe
+            check_output(['ffprobe', '-version'], stderr=STDOUT)
+            logger.info("ffmpeg and ffprobe found and working correctly")
+        except CalledProcessError:
+            raise RuntimeError("ffmpeg/ffprobe is installed but not working correctly")
 
 if __name__ == "__main__":
     # We will be using a sample from librivox for the demo
