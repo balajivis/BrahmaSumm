@@ -3,10 +3,9 @@ import yaml
 import logging
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
-from langchain_community.embeddings import OllamaEmbeddings
-from langchain_ollama import ChatOllama
+from langchain_ollama import ChatOllama, OllamaEmbeddings
 from langchain_openai import OpenAI
-from langchain_openai import AzureOpenAI
+from langchain_openai import AzureOpenAI, OpenAIEmbeddings
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -121,13 +120,22 @@ class ModelManager:
 
     def load_embedding_model(self):
         """
-        Lazily loads the Hugging Face embedding model based on the configuration if it hasn't been loaded yet.
+        Lazily Loads the embedding model based on the cloud provider configuration. if it hasn't been loaded yet.
         :return: The loaded embedding model.
         """
         if not self.embedding_model:
             try:
                 logger.info("Loading embedding model...")
-                self.embedding_model = OllamaEmbeddings(model=self.config['embedding_model'])
+                if self.config['cloud_provider'] == 'ollama':
+                    self.embedding_model = OllamaEmbeddings(
+                        model=self.config['embedding_model']
+                    )
+                elif self.config['cloud_provider'] == 'groq':
+                    # Since Groq doesn't have embeddings yet, we'll use OpenAI's
+                    self.embedding_model = OpenAIEmbeddings(
+                        model=self.config['embedding_model']
+                    )
+
                 logger.info("Embedding model loaded successfully.")
             except KeyError as e:
                 logger.error("Missing required config key for embedding model: %s", e)

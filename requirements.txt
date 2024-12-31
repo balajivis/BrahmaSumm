@@ -58,6 +58,7 @@ langchain-community==0.3.5
 langchain-core>=0.3.15
 langchain-groq==0.2.1
 langchain-ollama
+langchain-openai
 langchain-huggingface
 langchain-text-splitters==0.3.2
 langsmith>=0.1.125
