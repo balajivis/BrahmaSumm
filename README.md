@@ -65,6 +65,43 @@ Understand the flow of ideas in a document broken into paragraphs.
    pip install -r requirements.txt
    ```
 
+3. **Install and Configure Model Providers**
+
+   The tool supports multiple model providers. Choose and set up at least one:
+
+   **Option A: Ollama (Local)**
+   1. Install Ollama by following instructions at [Ollama.ai](https://ollama.ai)
+   2. Pull required models:
+      ```bash
+      # For LLM
+      ollama pull gemma:2b  # or your preferred model
+
+      # For embeddings
+      ollama pull nomic-embed-text
+      ```
+   3. Update `config/config.yaml`:
+      ```yaml
+      cloud_provider: "ollama"
+      llm_provider: "ollama"
+      llm_model: "gemma:2b"  # or your chosen model
+      embedding_model: "nomic-embed-text:latest"
+      ```
+
+   **Option B: Groq (Cloud)**
+   1. Sign up for a Groq account and get your API key
+   2. Set your Groq API key:
+      ```bash
+      export GROQ_API_KEY="your-api-key"
+      ```
+      or add the key in `.env` file.
+   3. Update `config/config.yaml`:
+      ```yaml
+      cloud_provider: "groq"
+      llm_provider: "groq"
+      llm_model: "llama-3.1-70b-versatile"
+      embedding_model: "nomic-embed-text:latest"
+      ```
+
 ### Usage
 
 1. In `src/summarize.py`, add the file name and type, for example:
