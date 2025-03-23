@@ -11,5 +11,5 @@ n_clusters: 13
 embed_batch_size: 25
 n_closest_representatives: 3
 
-asr_model: "whister tiny"
+asr_model: "whisper tiny"
 asr_chunk: 30
