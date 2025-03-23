@@ -26,6 +26,7 @@ dataclasses-json==0.6.7
 Deprecated==1.2.14
 distro==1.9.0
 docutils==0.21.2
+docx2txt==0.8
 fastapi==0.114.0
 filelock==3.16.0
 flatbuffers==24.3.25
